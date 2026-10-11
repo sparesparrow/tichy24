@@ -18,7 +18,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "check:stock": "tsx --conditions=react-server scripts/check-stock-race.mts",
-    "setup:vercel": "tsx scripts/setup-vercel.ts"
+    "setup:vercel": "tsx scripts/setup-vercel.ts",
+    "build:pages": "tsx scripts/build-pages.mts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",

@@ -79,5 +79,10 @@ označuje i `user:heslo@` v connection stringu.
 - Prisma 7 vyžaduje **Node ≥ 20.19** (CI i Vercel: 22).
 - **Bez e-mailů, bez online platby, bez automatického rušení nezaplacených objednávek, bez rate limitu**
   — viz README. Nepřidávat rate limit jako in-memory `Map` na serverless (per instance = nefunguje).
-- Dokud `SHOP_LIVE≠1`, web posílá `noindex` a `robots.txt` zakazuje vše. Hodnoty v hranatých závorkách
-  v `src/lib/site.ts` jsou zástupné.
+- Dokud `SHOP_LIVE≠1`, web posílá `noindex` a `robots.txt` zakazuje vše.
+- **Kontaktní údaje (adresa, telefon, UID) jsou v env `SHOP_*`, ne v kódu** (repo je veřejné) —
+  čistý modul `src/lib/contact.ts`, `site.contact` je čte. Texty se skládají jen z vyplněných hodnot
+  (žádné zástupné řetězce); `next.config.ts` při `SHOP_LIVE=1` bez povinných údajů shodí build.
+  Nové údaje přidávat přes `contact.ts` (+ test), ne přímo do `site.ts`.
+- **GitHub Pages** (`pages.yml`, `scripts/build-pages.mts`, `src/lib/pages.ts`) publikuje jen statickou
+  úvodní stránku, ne obchod. Všechno do HTML jde přes `esc()`; odkazy jsou relativní.

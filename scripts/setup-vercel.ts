@@ -12,7 +12,8 @@
  *   NEON_PROJECT_ID=<id> npm run setup:vercel -- --deploy    # rovnou i nasadí
  *
  * Volitelně: ADMIN_EMAIL + ADMIN_PASSWORD (čte je jen seed), SHOP_IBAN,
- * SHOP_BANK_HOLDER. Heslo patří člověku, takže se nikdy negeneruje samo.
+ * SHOP_BANK_HOLDER a kontaktní údaje SHOP_EMAIL/PHONE/STREET/POSTAL_CODE/CITY/UID/
+ * PICKUP_HOURS (Impressum). Heslo patří člověku, takže se nikdy negeneruje samo.
  *
  * Co skript zásadně NEDĚLÁ: nesahá na DNS u registrátora, nepřihlašuje se
  * a nic neregistruje. Konkrétní A záznamy vypíše na konci — Vercel je
@@ -122,7 +123,12 @@ function main(): void {
   // znovu, přečte si je ve Vercelu; do repozitáře nepatří.
   setEnv("AUTH_SECRET", randomBytes(32).toString("base64"));
 
-  for (const name of ["SHOP_IBAN", "SHOP_BANK_HOLDER"]) {
+  // Kontaktni udaje (Impressum) a banka — jen to, co clovek zadal; nic se nevymysli.
+  const optional = [
+    "SHOP_IBAN", "SHOP_BANK_HOLDER", "SHOP_EMAIL", "SHOP_PHONE", "SHOP_STREET",
+    "SHOP_POSTAL_CODE", "SHOP_CITY", "SHOP_UID", "SHOP_PICKUP_HOURS",
+  ];
+  for (const name of optional) {
     const value = process.env[name];
     if (value) setEnv(name, value);
     else console.log(`  --   ${name} přeskočeno (nezadáno; doplníte ve Vercelu před spuštěním).`);

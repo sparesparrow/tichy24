@@ -1,3 +1,4 @@
+import { addressInline, addressLines } from "@/lib/contact";
 import { site } from "@/lib/site";
 import { formatChf } from "@/lib/money";
 import { SHIPPING, VAT_RATE_BP, formatVatRate } from "@/lib/pricing";
@@ -15,7 +16,10 @@ import { SHIPPING, VAT_RATE_BP, formatVatRate } from "@/lib/pricing";
  * !! provozem je musi projit pravnik — viz README, "Pred spustenim".
  */
 
-const fullAddress = `${site.contact.street}, ${site.contact.postalCode} ${site.contact.city}`;
+// Adresa se ctou z env a do ladeni nemusi byt vyplnena — texty se pak skladaji bez ni.
+const addr = addressInline(site.contact);
+/** ", Bahnhofstrasse 1, 8001 Zürich" nebo "" — pripoji adresu za jmeno jen kdyz existuje. */
+const withAddr = addr ? `, ${addr}` : "";
 const vatOn = VAT_RATE_BP > 0;
 const vatText = formatVatRate(VAT_RATE_BP);
 
@@ -262,7 +266,7 @@ export const de = {
         {
           heading: "Abholung",
           paragraphs: [
-            `Sie können Ihre Bestellung in unserer Werkstatt abholen (${fullAddress}). Die Abholung erfolgt ${site.contact.pickupHours}. Wir melden uns, sobald die Bestellung bereitliegt. Die Abholung ist kostenlos.`,
+            `Sie können Ihre Bestellung in unserer Werkstatt abholen${addr ? ` (${addr})` : ""}. Die Abholung erfolgt ${site.contact.pickupHours}. Wir melden uns, sobald die Bestellung bereitliegt. Die Abholung ist kostenlos.`,
           ],
         },
         {
@@ -286,20 +290,27 @@ export const de = {
       sections: [
         {
           heading: "Anbieter",
-          paragraphs: [
-            `${site.owner}\n${site.contact.street}\n${site.contact.postalCode} ${site.contact.city}\nSchweiz`,
-          ],
+          paragraphs: [[site.owner, ...addressLines(site.contact), "Schweiz"].join("\n")],
         },
         {
           heading: "Kontakt",
-          paragraphs: [`E-Mail: ${site.contact.email}\nTelefon: ${site.contact.phone}`],
-        },
-        {
-          heading: "Handelsregister und Steuern",
           paragraphs: [
-            `Unternehmens-Identifikationsnummer (UID): ${site.contact.uid}${vatOn ? "\nMehrwertsteuer: Die Preise enthalten die gesetzliche Schweizer Mehrwertsteuer." : ""}`,
+            [`E-Mail: ${site.contact.email}`, site.contact.phone && `Telefon: ${site.contact.phone}`]
+              .filter(Boolean)
+              .join("\n"),
           ],
         },
+        // Ohne UID entfaellt der ganze Abschnitt, statt einen leeren Wert zu zeigen.
+        ...(site.contact.uid
+          ? [
+              {
+                heading: "Handelsregister und Steuern",
+                paragraphs: [
+                  `Unternehmens-Identifikationsnummer (UID): ${site.contact.uid}${vatOn ? "\nMehrwertsteuer: Die Preise enthalten die gesetzliche Schweizer Mehrwertsteuer." : ""}`,
+                ],
+              },
+            ]
+          : []),
         {
           heading: "Haftungsausschluss",
           paragraphs: [
@@ -322,7 +333,7 @@ export const de = {
         {
           heading: "1. Geltungsbereich",
           paragraphs: [
-            `Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle Bestellungen über den Online-Shop ${site.domain} von ${site.owner}, ${fullAddress} (nachfolgend «Verkäufer»). Abweichende Bedingungen des Kunden gelten nur, wenn der Verkäufer ihnen schriftlich zugestimmt hat.`,
+            `Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle Bestellungen über den Online-Shop ${site.domain} von ${site.owner}${withAddr} (nachfolgend «Verkäufer»). Abweichende Bedingungen des Kunden gelten nur, wenn der Verkäufer ihnen schriftlich zugestimmt hat.`,
           ],
         },
         {
@@ -393,7 +404,7 @@ export const de = {
         {
           heading: "Verantwortlicher",
           paragraphs: [
-            `Verantwortlich für die Datenbearbeitung auf dieser Website ist ${site.owner}, ${fullAddress}, E-Mail: ${site.contact.email}.`,
+            `Verantwortlich für die Datenbearbeitung auf dieser Website ist ${site.owner}${withAddr}, E-Mail: ${site.contact.email}.`,
           ],
         },
         {
@@ -436,6 +447,63 @@ export const de = {
         {
           heading: "Stand",
           paragraphs: ["Diese Erklärung kann angepasst werden. Es gilt die jeweils auf dieser Seite veröffentlichte Fassung."],
+        },
+      ] satisfies LegalSection[],
+    },
+  },
+
+  /** Statische Übergangsseite (GitHub Pages), solange der Shop noch nicht online ist. */
+  pages: {
+    nav: { home: "Start", impressum: "Impressum", privacy: "Datenschutz" },
+    landing: {
+      title: `${site.name} – ${site.tagline}`,
+      description: `${site.tagline}: Werkzeug, Ersatzteile und Pflegeprodukte – der Online-Shop ist in Vorbereitung.`,
+      heading: "Unser Online-Shop startet bald",
+      lead: "Werkzeug, Ersatzteile und Pflegeprodukte, die in der Werkstatt täglich im Einsatz sind – bald auch online bestellbar.",
+      items: [
+        { title: "Aus der Werkstatt", text: "Wir verkaufen, was wir selber verwenden. Keine Ladenhüter, kein Ramsch." },
+        { title: "Versand in der Schweiz", text: "Lieferung per Post in die Schweiz und nach Liechtenstein." },
+        { title: "Persönliche Beratung", text: "Unsicher, was passt? Fragen Sie den Mechaniker." },
+      ],
+      contactHeading: "Kontakt",
+      contactLead: "Fragen oder Anfragen vorab? Schreiben Sie uns.",
+      email: "E-Mail",
+      phone: "Telefon",
+      address: "Adresse",
+      notice: "Bestellungen sind auf dieser Seite noch nicht möglich.",
+    },
+    privacy: {
+      title: "Datenschutzerklärung",
+      sections: [
+        {
+          heading: "Verantwortlicher",
+          paragraphs: [
+            `Verantwortlich für die Datenbearbeitung auf dieser Website ist ${site.owner}${withAddr}, E-Mail: ${site.contact.email}.`,
+          ],
+        },
+        {
+          heading: "Hosting",
+          paragraphs: [
+            "Diese Seite wird über GitHub Pages (GitHub Inc., USA) ausgeliefert. Beim Aufruf verarbeitet der Hosting-Anbieter technisch notwendige Zugriffsdaten (z. B. IP-Adresse, Zeitpunkt, aufgerufene Seite, Browsertyp), um die Seite bereitzustellen und den Betrieb zu sichern. Dabei können Daten in die USA übermittelt werden; der Anbieter stellt ein angemessenes Datenschutzniveau durch vertragliche Garantien (z. B. Standardvertragsklauseln) sicher.",
+          ],
+        },
+        {
+          heading: "Cookies und Tracking",
+          paragraphs: [
+            "Diese Seite setzt keine Cookies, enthält keine Formulare und verwendet weder Analyse- noch Werbedienste.",
+          ],
+        },
+        {
+          heading: "Kontaktaufnahme",
+          paragraphs: [
+            `Wenn Sie uns per E-Mail schreiben, bearbeiten wir Ihre Angaben (Absender, Inhalt der Nachricht), um Ihre Anfrage zu beantworten. Schreiben Sie dazu an ${site.contact.email}.`,
+          ],
+        },
+        {
+          heading: "Ihre Rechte",
+          paragraphs: [
+            `Sie haben im Rahmen des anwendbaren Datenschutzrechts das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Bearbeitung Ihrer Daten. Wenden Sie sich dazu an ${site.contact.email}. Zudem können Sie sich beim Eidgenössischen Datenschutz- und Öffentlichkeitsbeauftragten (EDÖB) beschweren.`,
+          ],
         },
       ] satisfies LegalSection[],
     },

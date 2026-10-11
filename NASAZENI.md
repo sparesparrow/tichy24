@@ -99,6 +99,8 @@ Proměnné prostředí (scope **Production**):
 | `SITE_URL` | `https://tichy24.ch` (bez lomítka, apex bez `www`) |
 | `SHOP_LIVE` | `0`, dokud neodškrtáte „Před spuštěním“ v README; pak `1` |
 | `SHOP_IBAN`, `SHOP_BANK_HOLDER` | bankovní spojení pro platbu předem |
+| `SHOP_STREET`, `SHOP_POSTAL_CODE`, `SHOP_CITY`, `SHOP_PHONE`, `SHOP_UID` | údaje do Impressum — **povinné pro `SHOP_LIVE=1`** (jinak build selže); v repozitáři nejsou |
+| `SHOP_EMAIL`, `SHOP_PICKUP_HOURS` | volitelné (výchozí `info@tichy24.ch`, „nach Vereinbarung“) |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | jen pro seed (krok 5); silné heslo |
 
 ---
@@ -107,13 +109,19 @@ Proměnné prostředí (scope **Production**):
 
 Registraci a platbu provádí majitel u zvoleného registrátora.
 
+**Doporučení: [Infomaniak](https://www.infomaniak.com/)** — švýcarská firma, `.ch` patří k nejlevnějším
+(orientačně 7–12 USD/rok podle agregátoru [domainoffer.net](https://domainoffer.net/tld/ch/infomaniak),
+**aktuální cenu v CHF ověřte na jejich ceníku**), převod domény je zdarma, v jednom účtu jde mít i e-mail
+`info@tichy24.ch` (krok 6), DNS editor je standardní. Alternativy: Hostpoint, cyon, Metanet (ceny jsem
+nezjistil — porovnejte u nich). Rozhodující není nejnižší cena prvního roku, ale **cena prodloužení**.
+
 1. **Znovu ověřte dostupnost** (stav se mění):
    ```bash
    curl -s -o /dev/null -w "%{http_code}\n" https://rdap.nic.ch/domain/tichy24.ch   # 404 = volná
    ```
    (K 2026-10-10 byla volná. Jméno je na nálepce, proto s registrací neotálejte.)
 2. Objednejte `tichy24.ch` u registrátora. **Držitel: Dušan Tichý** se skutečnou adresou —
-   stejné údaje patří do Impressum (`src/lib/site.ts`).
+   stejné údaje patří do Impressum (proměnné `SHOP_*`, viz krok 2).
 3. Zapněte **automatické prodloužení** a **dvoufázové ověření** účtu u registrátora.
    Ztráta účtu = ztráta domény i e-mailu.
 4. DNSSEC (.ch ho podporuje) zapínejte až **po** tom, co web funguje; špatně nastavený
@@ -203,12 +211,32 @@ Testovací objednávka: přidat zboží do košíku, projít pokladnu, v `/admin
 
 ## 8. Spuštění
 
-1. Odškrtat **„Před spuštěním“** v `README.md`: údaje v `src/lib/site.ts`, právní revize,
+1. Odškrtat **„Před spuštěním“** v `README.md`: proměnné `SHOP_*` pro Impressum, právní revize,
    MwSt a poštovné, IBAN, smazání `DEMO-` produktů, vlastní produkty a fotky.
 2. Funkční `info@tichy24.ch` (krok 6).
 3. Nastavit `SHOP_LIVE=1` na Vercelu a znovu nasadit.
 4. Teprve pak odkaz sdílet; sitemap se do vyhledávačů hlásí ručně.
 
-> Repozitář je **veřejný**. Údaje vyplněné v `src/lib/site.ts` (adresa, telefon, UID) se tím
-> zveřejní i na GitHubu; Impressum je stejně veřejné, ale zvažte přesun do proměnných
-> prostředí, pokud to nechcete.
+> Repozitář je **veřejný**, proto kontaktní údaje (adresa, telefon, UID) v repozitáři nejsou, jen v proměnných
+> prostředí. Do výsledného webu (Impressum) se dostanou — to je veřejné ze zákona tak jako tak.
+
+---
+
+## 9. Mezistupeň: statická stránka na GitHub Pages
+
+Než je doména a Vercel funkční, běží z repozitáře **statická úvodní stránka** (workflow `pages.yml`).
+Není to obchod: žádná databáze, košík ani administrace.
+
+1. V repozitáři **Settings → Pages → Build and deployment → Source: GitHub Actions** (jednorázově; tohle
+   `GITHUB_TOKEN` neumí). Pak v **Actions → GitHub Pages → Run workflow** (nebo další push do `main`).
+2. **Settings → Secrets and variables → Actions → Variables:** `SHOP_PHONE`, `SHOP_STREET`,
+   `SHOP_POSTAL_CODE`, `SHOP_CITY`, `SHOP_UID` (+ volitelně `SHOP_EMAIL`, `PAGES_INDEX=1`). Bez nich se stránka
+   publikuje jen s e-mailem a build vypíše žlutou výstrahu.
+3. Adresa: `https://sparesparrow.github.io/tichy24/`. Stránka je `noindex`, dokud nenastavíte `PAGES_INDEX=1`.
+
+**Vlastní doména na GitHub Pages** (volitelné, jen jako přechodné řešení): po registraci v **Settings → Pages →
+Custom domain** zadat `tichy24.ch` a u registrátora nastavit DNS podle aktuálního návodu GitHubu
+(*Managing a custom domain for your GitHub Pages site* — `A` záznamy na adresy GitHubu pro apex a `CNAME`
+pro `www` na `sparesparrow.github.io`; adresy opisujte z jejich dokumentace). **Při přechodu na Vercel**
+(kroky 2–4) tyto záznamy nahradíte hodnotami z Vercelu a v Pages vlastní doménu odeberete — pak se
+nesmí na jednom jméně míchat záznamy obou služeb.

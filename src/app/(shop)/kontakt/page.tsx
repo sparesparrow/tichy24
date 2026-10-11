@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { addressLines } from "@/lib/contact";
 import { getDictionary } from "@/lib/i18n";
 import { site } from "@/lib/site";
 
@@ -20,10 +21,18 @@ export default async function ContactPage() {
           <dl className="kv">
             <dt>{k.email}</dt>
             <dd><a href={`mailto:${c.email}`}>{c.email}</a></dd>
-            <dt>{k.phone}</dt>
-            <dd>{c.phone}</dd>
-            <dt>{k.address}</dt>
-            <dd style={{ whiteSpace: "pre-line" }}>{`${site.owner}\n${c.street}\n${c.postalCode} ${c.city}`}</dd>
+            {c.phone && (
+              <>
+                <dt>{k.phone}</dt>
+                <dd>{c.phone}</dd>
+              </>
+            )}
+            {addressLines(c).length > 0 && (
+              <>
+                <dt>{k.address}</dt>
+                <dd style={{ whiteSpace: "pre-line" }}>{[site.owner, ...addressLines(c)].join("\n")}</dd>
+              </>
+            )}
             <dt>{k.pickup}</dt>
             <dd>{k.pickupText}</dd>
           </dl>

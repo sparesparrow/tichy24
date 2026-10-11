@@ -46,7 +46,7 @@ Bez webfontů, bez trackingu, bez knihovny pro stav košíku — nakupovat jde i
 |---|---|---|
 | Texty | `src/dictionaries/de.ts` | Typ `Dictionary` = `typeof de`; další jazyk (fr/it) se deklaruje `: Dictionary` a chybějící klíč shodí typecheck. Slovník obsahuje funkce → klientským komponentám se předávají jen hotové řetězce. |
 | Obchodní konstanty | `src/lib/pricing.ts` | MwSt (8,1 %), poštovné, limity. Čistý modul, používá ho i klientský formulář pokladny. |
-| Identita a kontakt | `src/lib/site.ts` | Texty právních stránek se z něj skládají. |
+| Identita a kontakt | `src/lib/site.ts`, `src/lib/contact.ts` | Jméno a slogan v kódu; adresa, telefon, UID z env `SHOP_*`. Texty právních stránek se z nich skládají. |
 | Peníze | `src/lib/money.ts` | Vše v **Rappen** (`...Cents`), nikdy float. |
 | Košík | `src/lib/cart.ts`, `cart-store.ts`, `cart-view.ts` | V cookie jen `{id, počet}`; **ceny se vždy čtou z DB**. |
 | Pokladna | `src/lib/checkout.ts`, `src/app/actions.ts` | Validace vrací kódy chyb, texty doplňuje server. Honeypot proti botům. |
@@ -74,10 +74,13 @@ pohyb osob; objednávky se v CH uchovávají 10 let, Art. 958f OR).
 ## Před spuštěním
 
 Dokud `SHOP_LIVE` není `1`, web posílá `noindex` a `robots.txt` zakazuje vše. Zapněte ho až po:
+(Kontaktní údaje se na stránkách zobrazují jen vyplněné; nikde nejsou zástupné texty.)
 
 - [ ] Registraci domény a nastavení `SITE_URL`.
-- [ ] **Vyplnění údajů v `src/lib/site.ts`** — ulice, PSČ, obec, telefon, UID (`CHE-…`). Hodnoty
-      v hranatých závorkách jsou zástupné a zobrazují se v Impressum, Kontaktu a AGB.
+- [ ] **Vyplnění kontaktních údajů v proměnných prostředí** — `SHOP_STREET`, `SHOP_POSTAL_CODE`,
+      `SHOP_CITY`, `SHOP_PHONE`, `SHOP_UID` (`CHE-…`), případně `SHOP_EMAIL` a `SHOP_PICKUP_HOURS`
+      (ve Vercelu; pro GitHub Pages jako Actions *variables*). V kódu ani repozitáři nejsou.
+      Bez povinných pěti **build s `SHOP_LIVE=1` selže** (`next.config.ts`).
 - [ ] **Právní revizi** `legal.*` v `src/dictionaries/de.ts` (Impressum, AGB, Datenschutz).
       Je to **vzor**, ne právní poradenství. Zkontrolujte hlavně: platební lhůtu 10 dní, vyloučení
       práva na odstoupení, odpovědnost, výčet zpracovatelů v Datenschutz (hosting, DB).
@@ -90,6 +93,18 @@ Dokud `SHOP_LIVE` není `1`, web posílá `noindex` a `robots.txt` zakazuje vše
 - [ ] Změně `ADMIN_PASSWORD` z výchozí hodnoty.
 - [ ] Nastavení proměnných v hostingu: `DATABASE_URL` (Neon, `?sslmode=require`),
       `DATABASE_URL_UNPOOLED`, `AUTH_SECRET`, `SITE_URL`, `SHOP_LIVE`, `SHOP_IBAN`.
+
+## Dočasná stránka na GitHub Pages
+
+Dokud není doména a Vercel funkční, je z repozitáře publikovaná **statická úvodní stránka**
+(`scripts/build-pages.mts` → `dist-pages/`, workflow `.github/workflows/pages.yml`): „Shop startet bald“,
+kontakt, Impressum a Datenschutz. **Není to obchod** — GitHub Pages umí jen statické soubory, takže nemá
+databázi, košík ani administraci. Adresa po zapnutí: `https://sparesparrow.github.io/tichy24/`.
+
+Jednorázově v repozitáři: **Settings → Pages → Source: GitHub Actions**; kontaktní údaje do
+**Settings → Secrets and variables → Actions → Variables** (`SHOP_PHONE`, `SHOP_STREET`,
+`SHOP_POSTAL_CODE`, `SHOP_CITY`, `SHOP_UID`, …). Stránka je `noindex`, dokud není proměnná `PAGES_INDEX=1`.
+Lokálně: `npm run build:pages` a otevřít `dist-pages/index.html`.
 
 ## Známá omezení
 

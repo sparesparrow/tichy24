@@ -1,0 +1,70 @@
+name: GitHub Pages
+
+# Docasna staticka uvodni stranka, dokud neni domena a Vercel hotovy.
+# Neni to obchod (staticke stranky nemaji databazi ani kosik) — viz README, NASAZENI.md.
+#
+# JEDNORAZOVE NASTAVENI (dela clovek, GITHUB_TOKEN to neumi):
+#   Settings -> Pages -> Build and deployment -> Source: "GitHub Actions"
+# Kontaktni udaje do Impressum: Settings -> Secrets and variables -> Actions -> Variables
+#   SHOP_PHONE, SHOP_STREET, SHOP_POSTAL_CODE, SHOP_CITY, SHOP_UID, (SHOP_EMAIL, SHOP_PICKUP_HOURS)
+# Indexace vyhledavaci: promenna PAGES_INDEX=1 (vychozi je noindex).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Jedno nasazeni najednou; rozdelane se nerusi, aby nezustala napul nahrana stranka.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build static pages
+        run: npm run build:pages
+        env:
+          # Hodnoty z repository variables; neexistujici promenna = prazdny retezec = udaj se vynecha.
+          SHOP_EMAIL: ${{ vars.SHOP_EMAIL }}
+          SHOP_PHONE: ${{ vars.SHOP_PHONE }}
+          SHOP_STREET: ${{ vars.SHOP_STREET }}
+          SHOP_POSTAL_CODE: ${{ vars.SHOP_POSTAL_CODE }}
+          SHOP_CITY: ${{ vars.SHOP_CITY }}
+          SHOP_UID: ${{ vars.SHOP_UID }}
+          SHOP_PICKUP_HOURS: ${{ vars.SHOP_PICKUP_HOURS }}
+          PAGES_INDEX: ${{ vars.PAGES_INDEX }}
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist-pages
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
