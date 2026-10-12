@@ -9,6 +9,15 @@ neměníme**, do zóny jen přidáme dva A záznamy; web běží na Vercelu, dat
 proměnné prostředí nastaví skript. Rozdíl je jen v registrátorovi (Citadela je ve Wedosu)
 a v tom, že tu není co plánovat přes cron.
 
+## Pořadí kroků
+
+1. **GitHub Pages** — hned, bez domény a bez databáze: statická úvodní stránka (sekce 9).
+2. **Vercel na adrese `*.vercel.app`** — celý obchod (katalog, košík, pokladna, administrace) jde nasadit
+   a vyzkoušet **dřív, než je doména** (sekce 1–2, bez přepínače `--domain`). Web je `noindex` (`SHOP_LIVE=0`).
+3. **Registrace domény a DNS** (sekce 3–4).
+4. **Připojení domény na Vercel** (`--domain`, `SITE_URL=https://tichy24.ch`), seed bez demo produktů, e-mail (sekce 5–6).
+5. **Spuštění** (`SHOP_LIVE=1`, sekce 8).
+
 > **Co z tohoto postupu dělá člověk a co ne.** Registrovat doménu (a platit), přihlásit se
 > do Vercelu / Neonu a vkládat záznamy do DNS může jen majitel. Skript `setup-vercel.ts`
 > se nikdy nepřihlašuje a na DNS nesahá.
@@ -64,18 +73,29 @@ Změny schématu proto **vždy jako migrace** v `prisma/migrations/`, nikdy `db 
 
 ## 2. Projekt na Vercelu
 
-### Rychlá cesta
+### Rychlá cesta — nejdřív na `*.vercel.app` (bez domény)
 
 ```bash
 npx vercel login                       # jednou, interaktivně
 npm install
 NEON_PROJECT_ID=<id> ADMIN_EMAIL="vy@example.ch" ADMIN_PASSWORD="…" \
-  SHOP_IBAN="CH…" npm run setup:vercel -- --deploy
+  npm run setup:vercel -- --deploy
 ```
 
-Skript propojí projekt, vytáhne oba připojovací řetězce z Neonu, vygeneruje `AUTH_SECRET`,
-nasadí a na konci vypíše hodnoty pro DNS. Je idempotentní, takže se dá pustit znovu.
-Není ozkoušený proti živému Vercelu — při prvním běhu zkontrolujte výpis a `npx vercel env ls`.
+Skript propojí projekt, vytáhne oba připojovací řetězce z Neonu, vygeneruje `AUTH_SECRET`, nastaví
+`SITE_URL=https://tichy24.vercel.app` a nasadí. **Doménu nepřipojuje** — ta přijde až v kroku 4 s přepínačem
+`--domain`. Je idempotentní, takže se dá pustit znovu. Není ozkoušený proti živému Vercelu — při prvním
+běhu zkontrolujte výpis a `npx vercel env ls`. Pokud Vercel projektu přidělí jiný název než `tichy24`,
+nastavte `SITE_URL` na skutečnou adresu (jinak míří canonical a sitemap jinam) a nasaďte znovu.
+
+**Co v tomto kroku platí:**
+- Web je `noindex` (`SHOP_LIVE=0`), ale **veřejně dosažitelný** — nikam ho neodkazujte; objednávky z něj
+  by šly do vybrané databáze.
+- **Databáze:** pro zkoušku s demo produkty dejte `NEON_BRANCH=development` (a po seedu s
+  `SEED_DEMO_PRODUCTS=1` na tuto větev se dá obchod proklikat). Pro ostrá data pak `production` bez demo seedu.
+  Demo seed na `production` nikdy nespouštějte.
+- Údaje do Impressum nejsou potřeba (chybějící se na stránkách vynechají); jsou povinné až pro `SHOP_LIVE=1`.
+- **Hobby plán Vercelu zakazuje komerční provoz** — na zkoušku stačí, pro ostrý obchod **Pro**.
 
 ### Nebo ručně
 
@@ -96,7 +116,7 @@ Proměnné prostředí (scope **Production**):
 | `DATABASE_URL_UNPOOLED` | **přímý** řetězec téže větve (bez `-pooler`) |
 | `AUTH_SECRET` | `openssl rand -base64 32` — vložte rovnou do Vercelu, do repozitáře nepatří |
 | `AUTH_TRUST_HOST` | `true` |
-| `SITE_URL` | `https://tichy24.ch` (bez lomítka, apex bez `www`) |
+| `SITE_URL` | nejdřív `https://tichy24.vercel.app`, po připojení domény `https://tichy24.ch` (bez lomítka, apex bez `www`) |
 | `SHOP_LIVE` | `0`, dokud neodškrtáte „Před spuštěním“ v README; pak `1` |
 | `SHOP_IBAN`, `SHOP_BANK_HOLDER` | bankovní spojení pro platbu předem |
 | `SHOP_STREET`, `SHOP_POSTAL_CODE`, `SHOP_CITY`, `SHOP_PHONE`, `SHOP_UID` | údaje do Impressum — **povinné pro `SHOP_LIVE=1`** (jinak build selže); v repozitáři nejsou |
@@ -134,7 +154,8 @@ a poštu mezi dva dodavatele je zbytečná komplikace.
 
 ## 4. DNS u registrátora
 
-Na Vercelu: **Settings → Domains → Add** → `tichy24.ch`; přidejte i `www.tichy24.ch`
+Až **po** zaregistrování domény. Na Vercelu: **Settings → Domains → Add** → `tichy24.ch`
+(nebo `npm run setup:vercel -- --deploy --domain`, který zároveň přepne `SITE_URL` na doménu); přidejte i `www.tichy24.ch`
 (`www` pak přesměruje na apex). Vercel u každé domény zobrazí kartu s **konkrétními
 hodnotami** — opište je, neopisujte z návodů: adresa se liší per projekt (u Citadely
 `76.76.21.21`, u novějších projektů `216.198.79.1`). Stejné hodnoty vypíše

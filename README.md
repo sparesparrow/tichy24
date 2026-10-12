@@ -3,7 +3,7 @@
 Německy psaný (de-CH) e-shop pro **Dušana Tichého — „Ihr Allrounder-Mechaniker“**.
 Katalog, košík, pokladna bez účtu, potvrzení objednávky a administrace objednávek a produktů.
 
-Návod na nasazení (Neon, Vercel, registrace domény a DNS) je v [`NASAZENI.md`](NASAZENI.md).
+Návod na nasazení (GitHub Pages → Vercel na `*.vercel.app` → registrace domény a DNS) je v [`NASAZENI.md`](NASAZENI.md).
 Pravidla pro práci v repozitáři jsou v [`CLAUDE.md`](CLAUDE.md).
 
 Původně vznikl jako složka `tichy24-shop/` v repozitáři `citadela` (hotelový web); postupy z něj jsou

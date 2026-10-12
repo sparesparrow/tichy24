@@ -7,6 +7,8 @@ name: GitHub Pages
 #   Settings -> Pages -> Build and deployment -> Source: "GitHub Actions"
 # Kontaktni udaje do Impressum: Settings -> Secrets and variables -> Actions -> Variables
 #   SHOP_PHONE, SHOP_STREET, SHOP_POSTAL_CODE, SHOP_CITY, SHOP_UID, (SHOP_EMAIL, SHOP_PICKUP_HOURS)
+# Dokud promenna neexistuje, pouzije se ZASTUPNA hodnota v hranatych zavorkach (viz nize) —
+# videt na verejne strance! Stranka je noindex. Ostry obchod (SHOP_LIVE=1) zastupne hodnoty odmitne.
 # Indexace vyhledavaci: promenna PAGES_INDEX=1 (vychozi je noindex).
 on:
   push:
@@ -42,13 +44,13 @@ jobs:
       - name: Build static pages
         run: npm run build:pages
         env:
-          # Hodnoty z repository variables; neexistujici promenna = prazdny retezec = udaj se vynecha.
+          # Hodnoty z repository variables; chybejici promenna = zastupna hodnota.
           SHOP_EMAIL: ${{ vars.SHOP_EMAIL }}
-          SHOP_PHONE: ${{ vars.SHOP_PHONE }}
-          SHOP_STREET: ${{ vars.SHOP_STREET }}
-          SHOP_POSTAL_CODE: ${{ vars.SHOP_POSTAL_CODE }}
-          SHOP_CITY: ${{ vars.SHOP_CITY }}
-          SHOP_UID: ${{ vars.SHOP_UID }}
+          SHOP_PHONE: ${{ vars.SHOP_PHONE || '[Telefonnummer]' }}
+          SHOP_STREET: ${{ vars.SHOP_STREET || '[Strasse und Nr.]' }}
+          SHOP_POSTAL_CODE: ${{ vars.SHOP_POSTAL_CODE || '[PLZ]' }}
+          SHOP_CITY: ${{ vars.SHOP_CITY || '[Ort]' }}
+          SHOP_UID: ${{ vars.SHOP_UID || '[CHE-xxx.xxx.xxx]' }}
           SHOP_PICKUP_HOURS: ${{ vars.SHOP_PICKUP_HOURS }}
           PAGES_INDEX: ${{ vars.PAGES_INDEX }}
 

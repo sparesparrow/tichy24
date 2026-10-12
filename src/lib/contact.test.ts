@@ -3,6 +3,7 @@ import {
   addressInline,
   addressLines,
   contactFromEnv,
+  isPlaceholder,
   looksLikeUid,
   missingForLaunch,
 } from "./contact";
@@ -59,6 +60,26 @@ describe("missingForLaunch", () => {
       SHOP_UID: "CHE-123.456.789",
     });
     expect(missingForLaunch(c)).toEqual([]);
+  });
+});
+
+describe("zastupne hodnoty", () => {
+  it.each(["[PLZ]", "[Strasse und Nr.]", " [Ort] "])("%j je zastupna", (v) =>
+    expect(isPlaceholder(v)).toBe(true),
+  );
+  it.each(["", "8001", "Zürich", "CHE-123.456.789"])("%j neni zastupna", (v) =>
+    expect(isPlaceholder(v)).toBe(false),
+  );
+
+  it("pro spusteni se zastupna hodnota pocita jako chybejici", () => {
+    const c = contactFromEnv({
+      SHOP_PHONE: "[Telefonnummer]",
+      SHOP_STREET: "Bahnhofstrasse 1",
+      SHOP_POSTAL_CODE: "[PLZ]",
+      SHOP_CITY: "Zürich",
+      SHOP_UID: "[CHE-xxx.xxx.xxx]",
+    });
+    expect(missingForLaunch(c)).toEqual(["SHOP_PHONE", "SHOP_POSTAL_CODE", "SHOP_UID"]);
   });
 });
 

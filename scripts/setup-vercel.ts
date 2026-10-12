@@ -9,7 +9,14 @@
  *   npx vercel login                       # jednou, interaktivně, dělá člověk
  *   npx neonctl auth                       # jednou, interaktivně, dělá člověk
  *   NEON_PROJECT_ID=<id> npm run setup:vercel
- *   NEON_PROJECT_ID=<id> npm run setup:vercel -- --deploy    # rovnou i nasadí
+ *   NEON_PROJECT_ID=<id> npm run setup:vercel -- --deploy             # nasadí na https://tichy24.vercel.app
+ *   NEON_PROJECT_ID=<id> npm run setup:vercel -- --deploy --domain    # + připojí tichy24.ch
+ *
+ * Nejdřív se nasazuje bez domény na výchozí adresu `*.vercel.app` — obchod jde
+ * vyzkoušet dřív, než je doména zaregistrovaná a DNS přepnuté. `--domain` přidej
+ * až potom: nastaví SITE_URL na doménu a připojí tichy24.ch + www.
+ * NEON_BRANCH (výchozí `production`) vybírá větev databáze; pro zkušební nasazení
+ * s demo produkty lze dát `development` (na ostrou větev se demo seed nespouští).
  *
  * Volitelně: ADMIN_EMAIL + ADMIN_PASSWORD (čte je jen seed), SHOP_IBAN,
  * SHOP_BANK_HOLDER a kontaktní údaje SHOP_EMAIL/PHONE/STREET/POSTAL_CODE/CITY/UID/
@@ -30,9 +37,19 @@ const DOMAIN = "tichy24.ch";
 /** Projekt na Vercelu — ten, který je propojený s GitHubem. */
 const PROJECT = process.env.VERCEL_PROJECT ?? "tichy24";
 
+const WITH_DOMAIN = process.argv.includes("--domain");
+const NEON_BRANCH = process.env.NEON_BRANCH ?? "production";
+
+/**
+ * Veřejná adresa. Bez `--domain` výchozí `https://<projekt>.vercel.app` — pokud je
+ * název projektu na Vercelu obsazený, přidělí jiný; skutečnou adresu po nasazení
+ * vypíšeme a když se liší, nastaví se SITE_URL ručně (jinak míří canonical a sitemap jinam).
+ */
+const SITE_URL = process.env.SITE_URL ?? (WITH_DOMAIN ? `https://${DOMAIN}` : `https://${PROJECT}.vercel.app`);
+
 /** Proměnné, které nejsou tajemství a mají pevnou hodnotu. */
 const PLAIN_VARS: Record<string, string> = {
-  SITE_URL: `https://${DOMAIN}`,
+  SITE_URL,
   AUTH_TRUST_HOST: "true",
   // Web zůstává nezaindexovaný, dokud člověk neodškrtá „Před spuštěním“
   // v README a ručně nepřepne na 1.
@@ -105,8 +122,9 @@ function main(): void {
   run("npx", ["-y", "vercel", "link", "--yes", "--project", PROJECT]);
 
   console.log("\nTahám připojovací řetězce z Neonu…");
-  const pooled = neonUrl(neonProject, "production", true);
-  const direct = neonUrl(neonProject, "production", false);
+  console.log(`  větev Neonu: ${NEON_BRANCH}`);
+  const pooled = neonUrl(neonProject, NEON_BRANCH, true);
+  const direct = neonUrl(neonProject, NEON_BRANCH, false);
   if (!pooled.includes("-pooler")) throw new Error("Pooled řetězec nemá -pooler.");
   if (direct.includes("-pooler")) throw new Error("Přímý řetězec má -pooler.");
   if (!/sslmode=/.test(pooled) || !/sslmode=/.test(direct)) {
@@ -149,14 +167,30 @@ function main(): void {
 
   if (process.argv.includes("--deploy")) {
     console.log("\nNasazuji…");
-    console.log(run("npx", ["-y", "vercel", "deploy", "--prod", "--yes"]));
+    const out = run("npx", ["-y", "vercel", "deploy", "--prod", "--yes"]);
+    console.log(out);
 
-    console.log(`\nPřipojuji doménu ${DOMAIN}…`);
-    tryRun("npx", ["-y", "vercel", "domains", "add", DOMAIN, PROJECT]);
-    tryRun("npx", ["-y", "vercel", "domains", "add", `www.${DOMAIN}`, PROJECT]);
+    // `vercel deploy` vypíše adresu nasazení; alias projektu na *.vercel.app je
+    // stabilní (https://<projekt>.vercel.app) a SITE_URL by na něj měl ukazovat.
+    const deployed = out.match(/https:\/\/[^\s]+\.vercel\.app/)?.[0];
+    if (deployed) console.log(`Nasazeno: ${deployed}`);
+    if (!WITH_DOMAIN && process.env.SITE_URL === undefined) {
+      console.log(
+        `SITE_URL je nastavené na ${SITE_URL}. Pokud Vercel projektu přidělil jiný název, ` +
+          "opravte SITE_URL (SITE_URL=… npm run setup:vercel -- --deploy) a nasaďte znovu.",
+      );
+    }
 
-    console.log("\nHodnoty pro DNS u registrátora (opište přesně tyto, ne z návodů):");
-    console.log(tryRun("npx", ["-y", "vercel", "domains", "inspect", DOMAIN]) ?? "(nedostupné)");
+    if (WITH_DOMAIN) {
+      console.log(`\nPřipojuji doménu ${DOMAIN}…`);
+      tryRun("npx", ["-y", "vercel", "domains", "add", DOMAIN, PROJECT]);
+      tryRun("npx", ["-y", "vercel", "domains", "add", `www.${DOMAIN}`, PROJECT]);
+
+      console.log("\nHodnoty pro DNS u registrátora (opište přesně tyto, ne z návodů):");
+      console.log(tryRun("npx", ["-y", "vercel", "domains", "inspect", DOMAIN]) ?? "(nedostupné)");
+    } else {
+      console.log("\nDoména zatím není připojená (přepínač --domain až po registraci a přepnutí DNS).");
+    }
   } else {
     console.log("\nProměnné jsou nastavené. Nasazení: znovu s přepínačem --deploy.");
   }

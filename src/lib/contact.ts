@@ -39,6 +39,14 @@ export function contactFromEnv(env: Env): Contact {
   };
 }
 
+/**
+ * Zastupna hodnota ve tvaru "[Telefonnummer]". Pouziva se jen v mezistupni
+ * (GitHub Pages bez skutecnych udaju) — pro ostre spusteni to neni platny udaj.
+ */
+export function isPlaceholder(value: string): boolean {
+  return /^\[.*\]$/.test(value.trim());
+}
+
 /** Promenne, bez kterych se obchod nesmi spustit (SHOP_LIVE=1). Impressum je povinne. */
 export const LAUNCH_REQUIRED: ReadonlyArray<{ field: keyof Contact; env: string }> = [
   { field: "phone", env: "SHOP_PHONE" },
@@ -48,9 +56,14 @@ export const LAUNCH_REQUIRED: ReadonlyArray<{ field: keyof Contact; env: string 
   { field: "uid", env: "SHOP_UID" },
 ];
 
-/** Nazvy promennych prostredi, ktere pro spusteni chybi. */
+/**
+ * Nazvy promennych prostredi, ktere pro spusteni chybi. Zastupna hodnota
+ * ("[PLZ]") se pocita jako chybejici — jinak by ostry web ukazoval hranate zavorky.
+ */
 export function missingForLaunch(contact: Contact): string[] {
-  return LAUNCH_REQUIRED.filter(({ field }) => contact[field] === "").map(({ env }) => env);
+  return LAUNCH_REQUIRED.filter(
+    ({ field }) => contact[field] === "" || isPlaceholder(contact[field]),
+  ).map(({ env }) => env);
 }
 
 /** ["Bahnhofstrasse 1", "8001 Zürich"] — jen vyplnene radky. */

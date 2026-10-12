@@ -5,8 +5,8 @@
  *   PAGES_INDEX=1 npm run build:pages     # povoli indexaci (vychozi: noindex)
  *
  * Kontaktni udaje se berou z promennych prostredi SHOP_* (viz .env.example);
- * v GitHub Actions z repository variables. Chybejici udaje nejsou chyba —
- * stranka je pak jen vynecha — ale skript na ne upozorni.
+ * v GitHub Actions z repository variables. Prazdny udaj se na strance
+ * vynecha, zastupny ("[PLZ]") se zobrazi tak, jak je — a skript na oboji upozorni.
  */
 
 import { cpSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
@@ -42,7 +42,7 @@ const missing = missingForLaunch(site.contact);
 if (missing.length > 0) {
   // Syntaxe GitHub Actions: zobrazi se jako zluty vykricnik u behu workflow.
   console.log(
-    `::warning title=Chybi udaje v Impressum::Nenastaveno: ${missing.join(", ")}. ` +
+    `::warning title=Chybi udaje v Impressum::Nenastaveno nebo zastupna hodnota: ${missing.join(", ")}. ` +
       "Doplnte je jako repository variables (Settings > Secrets and variables > Actions > Variables).",
   );
 }

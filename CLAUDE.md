@@ -85,4 +85,7 @@ označuje i `user:heslo@` v connection stringu.
   (žádné zástupné řetězce); `next.config.ts` při `SHOP_LIVE=1` bez povinných údajů shodí build.
   Nové údaje přidávat přes `contact.ts` (+ test), ne přímo do `site.ts`.
 - **GitHub Pages** (`pages.yml`, `scripts/build-pages.mts`, `src/lib/pages.ts`) publikuje jen statickou
-  úvodní stránku, ne obchod. Všechno do HTML jde přes `esc()`; odkazy jsou relativní.
+  úvodní stránku, ne obchod. Všechno do HTML jde přes `esc()`; odkazy jsou relativní. Workflow dosazuje
+  zástupné `[…]` hodnoty, když chybí repository variables; `missingForLaunch()` je počítá jako chybějící,
+  takže `SHOP_LIVE=1` se zástupnými údaji neprojde.
+- Nasazení jde **nejdřív na `*.vercel.app`** (`setup-vercel.ts --deploy`), doména až potom (`--domain`).
