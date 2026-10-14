@@ -190,6 +190,10 @@ export const de = {
       "Ein Artikel in Ihrem Warenkorb ist nicht mehr verfügbar. Bitte prüfen Sie den Warenkorb.",
     genericError:
       "Die Bestellung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut oder kontaktieren Sie uns.",
+    rateLimited: (minutes: number) =>
+      minutes === 1
+        ? "Zu viele Bestellversuche. Bitte warten Sie eine Minute und versuchen Sie es erneut."
+        : `Zu viele Bestellversuche. Bitte warten Sie etwa ${minutes} Minuten und versuchen Sie es erneut.`,
   },
 
   order: {
