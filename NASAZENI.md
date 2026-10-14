@@ -118,6 +118,7 @@ Proměnné prostředí (scope **Production**):
 | `AUTH_TRUST_HOST` | `true` |
 | `SITE_URL` | nejdřív `https://tichy24.vercel.app`, po připojení domény `https://tichy24.ch` (bez lomítka, apex bez `www`) |
 | `SHOP_LIVE` | `0`, dokud neodškrtáte „Před spuštěním“ v README; pak `1` |
+| `CRON_SECRET` | Náhodný secret (např. `openssl rand -base64 32`); zabezpečuje denní storno neuhrazených objednávek |
 | `SHOP_IBAN`, `SHOP_BANK_HOLDER` | bankovní spojení pro platbu předem |
 | `SHOP_STREET`, `SHOP_POSTAL_CODE`, `SHOP_CITY`, `SHOP_PHONE`, `SHOP_UID` | údaje do Impressum — **povinné pro `SHOP_LIVE=1`** (jinak build selže); v repozitáři nejsou |
 | `SHOP_EMAIL`, `SHOP_PICKUP_HOURS` | volitelné (výchozí `info@tichy24.ch`, „nach Vereinbarung“) |
