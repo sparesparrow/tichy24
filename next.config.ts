@@ -9,7 +9,7 @@ import { contactFromEnv, missingForLaunch } from "./src/lib/contact";
 if (process.env.SHOP_LIVE === "1") {
   const missing = [
     ...missingForLaunch(contactFromEnv(process.env)),
-    ...["RESEND_API_KEY", "EMAIL_FROM"].filter((key) => !process.env[key]?.trim()),
+    ...["RESEND_API_KEY", "EMAIL_FROM", "SHOP_IBAN"].filter((key) => !process.env[key]?.trim()),
   ];
   if (missing.length > 0) {
     throw new Error(
