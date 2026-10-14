@@ -39,6 +39,20 @@ export function Footer({ dict }: { dict: Dictionary }) {
           <span>{f.rights(new Date().getFullYear())}</span>
           <span>{f.swissNote} · {dict.common.currencyNote}</span>
         </div>
+        <div className="footer-credits">
+          <span>
+            {f.creditsWeb}{" "}
+            <a href="https://sparesparrow.github.io/sparrow-ai-tech" target="_blank" rel="noopener">
+              sparrow-ai-tech
+            </a>
+          </span>
+          <span>
+            {f.creditsPartner}{" "}
+            <a href="https://citadela-resort.cz" target="_blank" rel="noopener">
+              Citadela Resort
+            </a>
+          </span>
+        </div>
       </div>
     </footer>
   );

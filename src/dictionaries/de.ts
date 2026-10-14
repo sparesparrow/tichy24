@@ -238,6 +238,8 @@ export const de = {
     contact: "Kontakt",
     rights: (year: number) => `© ${year} ${site.owner}`,
     swissNote: "Online-Shop mit Sitz in der Schweiz",
+    creditsWeb: "Webdesign & Entwicklung:",
+    creditsPartner: "Partner:",
   },
 
   contactPage: {
