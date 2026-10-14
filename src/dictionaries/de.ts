@@ -190,6 +190,10 @@ export const de = {
       "Ein Artikel in Ihrem Warenkorb ist nicht mehr verfügbar. Bitte prüfen Sie den Warenkorb.",
     genericError:
       "Die Bestellung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut oder kontaktieren Sie uns.",
+    rateLimited: (minutes: number) =>
+      minutes === 1
+        ? "Zu viele Bestellversuche. Bitte warten Sie eine Minute und versuchen Sie es erneut."
+        : `Zu viele Bestellversuche. Bitte warten Sie etwa ${minutes} Minuten und versuchen Sie es erneut.`,
   },
 
   order: {
@@ -424,6 +428,12 @@ export const de = {
           heading: "Cookies",
           paragraphs: [
             "Wir setzen ein einziges, technisch notwendiges Cookie ein, in dem Ihr Warenkorb gespeichert wird. Es enthält nur Artikelnummern und Mengen, keine persönlichen Daten, und läuft nach 30 Tagen ab. Eine Einwilligung ist dafür nicht erforderlich.",
+          ],
+        },
+        {
+          heading: "Schutz vor Missbrauch",
+          paragraphs: [
+            "Zum Schutz vor automatisierten oder missbräuchlichen Bestellungen zählen wir Bestellversuche in kurzen Zeitfenstern. Dafür wird die Client-IP mit einem geheimen Schlüssel in eine zeitfensterbezogene Kennung umgewandelt. In der Shop-Datenbank speichern wir nur diese HMAC-Kennung, nicht die rohe IP-Adresse. Abgelaufene Zähler werden bei der täglichen Wartung gelöscht; die Kennungen bleiben damit in der Regel höchstens etwa zwei Tage gespeichert.",
           ],
         },
         {

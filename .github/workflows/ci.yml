@@ -15,6 +15,7 @@ concurrency:
 env:
   DATABASE_URL: postgresql://tichy24@localhost:5432/tichy24_ci
   AUTH_SECRET: ci-only-not-a-real-secret-000000000000000=
+  RATE_LIMIT_SECRET: ci-only-rate-limit-secret-for-tests
   AUTH_TRUST_HOST: "true"
   SITE_URL: http://localhost:3000
 
@@ -71,3 +72,7 @@ jobs:
       - name: Stock race check
         # Dukaz nad skutecnou databazi: posledni kusy zbozi nejdou prodat dvakrat.
         run: npm run check:stock
+
+      - name: Checkout rate-limit concurrency check
+        # The limiter must be atomic across many simultaneous checkout submissions.
+        run: npm run check:rate-limit

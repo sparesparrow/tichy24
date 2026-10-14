@@ -18,6 +18,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "check:stock": "tsx --conditions=react-server scripts/check-stock-race.mts",
+    "check:rate-limit": "tsx --conditions=react-server scripts/check-rate-limit.mts",
     "setup:vercel": "tsx scripts/setup-vercel.ts",
     "build:pages": "tsx scripts/build-pages.mts"
   },

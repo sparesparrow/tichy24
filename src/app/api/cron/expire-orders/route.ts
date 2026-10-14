@@ -1,4 +1,5 @@
 import { expireUnpaidPrepaymentOrders } from "@/lib/orders";
+import { pruneExpiredCheckoutRateLimitBuckets } from "@/lib/checkout-rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,8 +16,15 @@ export async function GET(request: Request) {
 
   try {
     const result = await expireUnpaidPrepaymentOrders();
-    console.info("cron.expire-unpaid-prepayments", result);
-    return Response.json({ ok: true, ...result });
+    let rateLimitBucketsPruned = 0;
+    try {
+      rateLimitBucketsPruned = await pruneExpiredCheckoutRateLimitBuckets();
+    } catch (cleanupError) {
+      // Rate-limit cleanup must not prevent overdue orders from being cancelled.
+      console.error("cron.checkout-rate-limit-cleanup failed", cleanupError);
+    }
+    console.info("cron.expire-unpaid-prepayments", { ...result, rateLimitBucketsPruned });
+    return Response.json({ ok: true, ...result, rateLimitBucketsPruned });
   } catch (error) {
     console.error("cron.expire-unpaid-prepayments failed", error);
     return Response.json({ ok: false }, { status: 500 });

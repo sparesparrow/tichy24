@@ -177,3 +177,15 @@ model OrderItem {
 
   @@index([orderId])
 }
+
+model CheckoutRateLimitBucket {
+  /// HMAC-derived identifier; raw client IP addresses are never stored.
+  bucketKey String   @id
+  count     Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+
