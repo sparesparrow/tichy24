@@ -58,7 +58,7 @@ function layout(
 <title>${esc(page.title)}</title>
 <meta name="description" content="${esc(page.description)}">
 <meta name="robots" content="${robots}">
-<meta name="theme-color" content="#0b6bcb">
+<meta name="theme-color" content="#11110f">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="style.css">
 </head>
