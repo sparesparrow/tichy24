@@ -121,7 +121,7 @@ Proměnné prostředí (scope **Production**):
 | `CRON_SECRET` | Náhodný secret (např. `openssl rand -base64 32`); zabezpečuje oba plánované úkoly |
 | `RESEND_API_KEY` | API klíč Resend; uložte jako tajemství ve Vercelu |
 | `EMAIL_FROM` | Odesílatel na doméně ověřené v Resend, např. `Tichy24 <orders@tichy24.ch>` |
-| `SHOP_IBAN`, `SHOP_BANK_HOLDER` | bankovní spojení pro platbu předem |
+| `SHOP_IBAN`, `SHOP_BANK_HOLDER` | bankovní spojení pro platbu předem; `SHOP_IBAN` je povinný při `SHOP_LIVE=1` |
 | `SHOP_STREET`, `SHOP_POSTAL_CODE`, `SHOP_CITY`, `SHOP_PHONE`, `SHOP_UID` | údaje do Impressum — **povinné pro `SHOP_LIVE=1`** (jinak build selže); v repozitáři nejsou |
 | `SHOP_EMAIL`, `SHOP_PICKUP_HOURS` | volitelné (výchozí `info@tichy24.ch`, „nach Vereinbarung“) |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | jen pro seed (krok 5); silné heslo |
