@@ -115,6 +115,7 @@ Proměnné prostředí (scope **Production**):
 | `DATABASE_URL` | **pooled** řetězec větve `production` |
 | `DATABASE_URL_UNPOOLED` | **přímý** řetězec téže větve (bez `-pooler`) |
 | `AUTH_SECRET` | `openssl rand -base64 32` — vložte rovnou do Vercelu, do repozitáře nepatří |
+| `RATE_LIMIT_SECRET` | Doporučený samostatný klíč pro HMAC rate limitu (`openssl rand -base64 32`); pokud chybí, použije se `AUTH_SECRET` |
 | `AUTH_TRUST_HOST` | `true` |
 | `SITE_URL` | nejdřív `https://tichy24.vercel.app`, po připojení domény `https://tichy24.ch` (bez lomítka, apex bez `www`) |
 | `SHOP_LIVE` | `0`, dokud neodškrtáte „Před spuštěním“ v README; pak `1` |
