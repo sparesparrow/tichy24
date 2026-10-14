@@ -16,7 +16,10 @@ export default async function AdminOrderPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const [{ id }, { error }] = await Promise.all([params, searchParams]);
-  const order = await prisma.order.findUnique({ where: { id }, include: { items: true } });
+  const order = await prisma.order.findUnique({
+    where: { id },
+    include: { items: true, emailOutbox: { orderBy: { createdAt: "asc" } } },
+  });
   if (!order) notFound();
 
   const dict = await getDictionary();
@@ -94,6 +97,30 @@ export default async function AdminOrderPage({
                       <button className="btn" type="submit">{a.action[to as "PAID" | "FULFILLED"]}</button>
                     )}
                   </form>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="order-box">
+            <h2>{a.emailHeading}</h2>
+            {order.emailOutbox.length === 0 ? (
+              <p className="meta">{a.noEmails}</p>
+            ) : (
+              <div className="action-list">
+                {order.emailOutbox.map((email) => (
+                  <div key={email.id}>
+                    <strong>{a.emailTypeLabel[email.type]}</strong>
+                    <div className="meta">{email.recipient}</div>
+                    <div>
+                      <span className={`pill pill-${email.status === "SENT" ? "FULFILLED" : email.status === "FAILED" ? "CANCELLED" : "NEW"}`}>
+                        {a.emailStatusLabel[email.status]}
+                      </span>
+                      <span className="meta"> · {a.emailAttempts(email.attempts)}</span>
+                    </div>
+                    {email.sentAt && <div className="meta">{a.emailSentAt}: {formatDateTime(email.sentAt)}</div>}
+                    {email.lastError && <div className="field-error">{a.emailLastError}: {email.lastError}</div>}
+                  </div>
                 ))}
               </div>
             )}

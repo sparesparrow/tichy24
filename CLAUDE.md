@@ -80,9 +80,11 @@ označuje i `user:heslo@` v connection stringu.
   — odstranění rozbije každou routu s Prismou. `assertProductionUrl()` v `src/lib/prisma.ts` na produkci
   vyžaduje `sslmode`.
 - Prisma 7 vyžaduje **Node ≥ 20.19** (CI i Vercel: 22).
-- **Bez e-mailů, bez online platby, bez rate limitu** — viz README. Automatické storno nezaplacené
-  Vorkasse je zajištěné denním cronem, který vyžaduje `CRON_SECRET`. Nepřidávat rate limit jako
-  in-memory `Map` na serverless (per instance = nefunguje).
+- **Bez online platby a bez rate limitu** — viz README. Objednávka atomicky vytvoří dvě položky
+  v `EmailOutbox`; `/api/cron/send-emails` je posílá přes Resend s idempotency key a exponenciálním
+  opakováním. `RESEND_API_KEY`, `EMAIL_FROM` a `CRON_SECRET` jsou povinné při `SHOP_LIVE=1`.
+  Automatické storno Vorkasse vyžaduje stejný `CRON_SECRET`. Nepřidávat in-memory rate limit na
+  serverless (per instance = nefunguje).
 - Dokud `SHOP_LIVE≠1`, web posílá `noindex` a `robots.txt` zakazuje vše.
 - **Kontaktní údaje (adresa, telefon, UID) jsou v env `SHOP_*`, ne v kódu** (repo je veřejné) —
   čistý modul `src/lib/contact.ts`, `site.contact` je čte. Texty se skládají jen z vyplněných hodnot
