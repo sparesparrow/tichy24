@@ -6,7 +6,7 @@ import "./globals.css";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#0b6bcb",
+  themeColor: "#11110f",
 };
 
 export async function generateMetadata(): Promise<Metadata> {

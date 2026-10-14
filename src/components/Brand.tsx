@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { site } from "@/lib/site";
 
-/** Logotyp: modre "tichy24" + ".ch" a svycarsky krizek v cervenem znaku. */
+/** Logotyp: zlate "tichy24" + ".ch" a svycarsky krizek v cervenem znaku. */
 export function Brand() {
   return (
     <Link className="brand" href="/" aria-label={`${site.name} – Startseite`}>

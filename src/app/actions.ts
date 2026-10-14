@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -16,6 +17,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { checkCheckoutRateLimit } from "@/lib/checkout-rate-limit";
 import { clientIdentifierFromHeaders } from "@/lib/rate-limit-policy";
+import { EmailDeliveryConfigurationError, processEmailOutboxBatch } from "@/lib/email-outbox";
 
 /**
  * Server actions verejneho obchodu. Kazda z nich je verejne dosazitelny
@@ -126,5 +128,16 @@ export async function placeOrderAction(
 
   // Cookie se maze az po uspesnem ulozeni, aby pri chybe zakaznik o kosik neprisel.
   await writeCart([]);
+  // Hobby cron bezi jen jednou denne. Potvrzeni musi odejit hned, ale selhani
+  // posty nesmi shodit uz ulozenou objednavku — denni cron to doresi.
+  after(async () => {
+    try {
+      const result = await processEmailOutboxBatch();
+      console.info("order.email.dispatch", result);
+    } catch (error) {
+      if (error instanceof EmailDeliveryConfigurationError) return;
+      console.error("order.email.dispatch failed", error);
+    }
+  });
   redirect(`/bestellung/${publicToken}`);
 }
