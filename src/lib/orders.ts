@@ -6,6 +6,8 @@ import type { CheckoutData } from "./checkout";
 import { computeTotals } from "./pricing";
 import { canTransition, restocksOn, type OrderStatusKey, type PaymentKey } from "./order-status";
 import { isExpiredUnpaidPrepaymentOrder, prepaymentCutoff } from "./order-expiration";
+import { buildOrderEmails } from "./order-email-template";
+import { site } from "./site";
 
 export class EmptyCartError extends Error {
   constructor() {
@@ -71,7 +73,7 @@ export async function placeOrder(data: CheckoutData, lines: readonly CartLine[])
     });
     const totals = computeTotals(priced, data.deliveryMethod);
 
-    return tx.order.create({
+    const order = await tx.order.create({
       data: {
         publicToken: randomBytes(18).toString("base64url"),
         deliveryMethod: data.deliveryMethod,
@@ -99,7 +101,31 @@ export async function placeOrder(data: CheckoutData, lines: readonly CartLine[])
           })),
         },
       },
+      include: { items: true },
     });
+    const messages = buildOrderEmails({
+      order,
+      shopName: site.name,
+      shopEmail: site.contact.email,
+      siteUrl: site.url,
+      bankHolder: site.bank.holder,
+      iban: site.bank.iban,
+    });
+    await tx.emailOutbox.createMany({
+      data: messages.map((message) => ({
+        orderId: order.id,
+        type: message.type,
+        recipient: message.recipient,
+        replyTo: message.replyTo,
+        fromAddress: process.env.EMAIL_FROM?.trim() || null,
+        subject: message.subject,
+        html: message.html,
+        text: message.text,
+        idempotencyKey: message.idempotencyKey,
+        updatedAt: new Date(),
+      })),
+    });
+    return order;
   });
 }
 

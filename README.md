@@ -93,7 +93,8 @@ Dokud `SHOP_LIVE` není `1`, web posílá `noindex` a `robots.txt` zakazuje vše
 - [ ] Změně `ADMIN_PASSWORD` z výchozí hodnoty.
 - [ ] Nastavení proměnných v hostingu: `DATABASE_URL` (Neon, `?sslmode=require`),
       `DATABASE_URL_UNPOOLED`, `AUTH_SECRET`, `SITE_URL`, `SHOP_LIVE`, `SHOP_IBAN`,
-      `CRON_SECRET` (náhodná hodnota, např. `openssl rand -base64 32`, pro zabezpečení plánovaného úkolu).
+      `CRON_SECRET` (náhodná hodnota, např. `openssl rand -base64 32`),
+      `RESEND_API_KEY` a `EMAIL_FROM` (odesílatel na ověřené doméně v Resend).
 
 ## Dočasná stránka na GitHub Pages
 
@@ -109,9 +110,12 @@ Lokálně: `npm run build:pages` a otevřít `dist-pages/index.html`.
 
 ## Známá omezení
 
-- **Žádné e-maily.** Zákazník dostane potvrzení jen jako stránku (`/bestellung/<token>`) a obchod
-  o nové objednávce zjistí v administraci. Chybí odesílání (např. Resend/Postmark) — je to první
-  věc, kterou je třeba doplnit; AGB zatím mluví o „potvrzení objednávky“ obecně.
+- **Transakční e-maily:** potvrzení zákazníkovi a oznámení obchodu se ukládají v `EmailOutbox`
+  ve stejné databázové transakci jako objednávka. Vercel Cron každých 5 minut doručuje dávku přes
+  Resend. Dočasné chyby se opakují (max. 8 pokusů s exponenciální prodlevou), konečné chyby jsou
+  vidět v detailu objednávky v administraci. Stabilní `Idempotency-Key` omezuje duplicity při
+  opakování po timeoutu. Vyžaduje `RESEND_API_KEY`, `EMAIL_FROM` z ověřené domény a `CRON_SECRET`.
+  Cron každých 5 minut vyžaduje Vercel Pro/Enterprise; Hobby dovoluje jen jeden běh denně.
 - **Žádná online platba.** Jen Vorkasse (převod) a hotovost při osobním převzetí. Další krok je
   Stripe Checkout nebo Payrexx s **TWINT** — ve Švýcarsku je to pro e-shop téměř nutnost.
   Rozšíření: nová hodnota `PaymentMethod`, webhook, který přepne stav na `PAID`.

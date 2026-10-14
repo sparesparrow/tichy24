@@ -118,8 +118,10 @@ Proměnné prostředí (scope **Production**):
 | `AUTH_TRUST_HOST` | `true` |
 | `SITE_URL` | nejdřív `https://tichy24.vercel.app`, po připojení domény `https://tichy24.ch` (bez lomítka, apex bez `www`) |
 | `SHOP_LIVE` | `0`, dokud neodškrtáte „Před spuštěním“ v README; pak `1` |
-| `CRON_SECRET` | Náhodný secret (např. `openssl rand -base64 32`); zabezpečuje denní storno neuhrazených objednávek |
-| `SHOP_IBAN`, `SHOP_BANK_HOLDER` | bankovní spojení pro platbu předem |
+| `CRON_SECRET` | Náhodný secret (např. `openssl rand -base64 32`); zabezpečuje oba plánované úkoly |
+| `RESEND_API_KEY` | API klíč Resend; uložte jako tajemství ve Vercelu |
+| `EMAIL_FROM` | Odesílatel na doméně ověřené v Resend, např. `Tichy24 <orders@tichy24.ch>` |
+| `SHOP_IBAN`, `SHOP_BANK_HOLDER` | bankovní spojení pro platbu předem; `SHOP_IBAN` je povinný při `SHOP_LIVE=1` |
 | `SHOP_STREET`, `SHOP_POSTAL_CODE`, `SHOP_CITY`, `SHOP_PHONE`, `SHOP_UID` | údaje do Impressum — **povinné pro `SHOP_LIVE=1`** (jinak build selže); v repozitáři nejsou |
 | `SHOP_EMAIL`, `SHOP_PICKUP_HOURS` | volitelné (výchozí `info@tichy24.ch`, „nach Vereinbarung“) |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | jen pro seed (krok 5); silné heslo |
@@ -212,7 +214,7 @@ Adresa je uvedená v Impressum, na stránce Kontakt a v AGB. Nastavte u registr�
 nebo přesměrování a přidejte jeho **MX záznamy** (a SPF/DKIM podle jeho návodu). **Dokud
 adresa nepřijímá poštu, nepřepínejte `SHOP_LIVE=1`.**
 
-Aplikace zatím sama žádné e-maily neposílá (viz „Známá omezení“ v README).
+Aplikace posílá transakční e-maily přes Resend. Ověřte odesílací doménu v Resend a nastavte RESEND_API_KEY a EMAIL_FROM ve Vercelu. Potvrzení objednávky se zákazníkovi a oznámení obchodu ukládají do databázové fronty při vytvoření objednávky. Vercel Cron posílá frontu každých 5 minut přes /api/cron/send-emails; stav a případná chyba jsou vidět v detailu objednávky v administraci. Frekvence každých 5 minut vyžaduje Vercel plán s podporou častějšího než denního cronu.
 
 ---
 

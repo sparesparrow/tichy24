@@ -429,7 +429,7 @@ export const de = {
         {
           heading: "Weitergabe an Dritte",
           paragraphs: [
-            "Wir geben Daten nur weiter, soweit dies zur Abwicklung nötig ist, etwa an die Post für den Versand. Für Hosting und Datenbank setzen wir Dienstleister ein, die in unserem Auftrag Daten bearbeiten. Dabei können Daten auch ins Ausland, insbesondere in die EU und in die USA, übermittelt werden. Wir stellen durch vertragliche Garantien (z. B. Standardvertragsklauseln) ein angemessenes Datenschutzniveau sicher.",
+            "Wir geben Daten nur weiter, soweit dies zur Abwicklung nötig ist, etwa an die Post für den Versand. Für Hosting, Datenbank und den Versand transaktionsbezogener E-Mails setzen wir Dienstleister ein, die Daten in unserem Auftrag bearbeiten; für den E-Mail-Versand nutzen wir Resend. Dabei können Daten auch ins Ausland, insbesondere in die EU und in die USA, übermittelt werden. Das konkrete Datenschutzniveau und die Verträge mit den Dienstleistern sind vor dem Live-Betrieb zu prüfen.",
           ],
         },
         {
@@ -550,6 +550,21 @@ export const de = {
       },
       cancelConfirm: "Bestellung wirklich stornieren? Die Artikel werden ins Lager zurückgebucht. Eine bereits erfolgte Zahlung müssen Sie manuell zurückerstatten.",
       changeFailed: "Der Status konnte nicht geändert werden (bereits geändert?).",
+      emailHeading: "E-Mail-Benachrichtigungen",
+      noEmails: "Für diese Bestellung sind keine E-Mails vorgemerkt.",
+      emailTypeLabel: {
+        ORDER_CONFIRMATION: "Bestellbestätigung an Kunden",
+        NEW_ORDER_NOTIFICATION: "Benachrichtigung an den Shop",
+      },
+      emailStatusLabel: {
+        PENDING: "Ausstehend",
+        PROCESSING: "Wird gesendet",
+        SENT: "Gesendet",
+        FAILED: "Fehlgeschlagen",
+      },
+      emailAttempts: (n: number) => (n === 1 ? "1 Versuch" : String(n) + " Versuche"),
+      emailSentAt: "Gesendet am",
+      emailLastError: "Letzter Fehler",
       deliveryLabel: { SHIPPING: "Versand", PICKUP: "Abholung" },
       paymentLabel: { PREPAYMENT: "Vorkasse", CASH_ON_PICKUP: "Bar bei Abholung" },
     },

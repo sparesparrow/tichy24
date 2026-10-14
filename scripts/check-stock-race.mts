@@ -92,6 +92,10 @@ try {
 
   console.log("Storno vrací sklad právě jednou:");
   const order = await placeOrder(customer, [{ productId: product.id, quantity: 2 }]);
+  const queuedEmails = await prisma.emailOutbox.findMany({ where: { orderId: order.id } });
+  check("objednavka ulozi obe e-mailove notifikace", queuedEmails.length === 2, {
+    queuedEmails: queuedEmails.map((email) => email.type),
+  });
   const [c1, c2] = await Promise.all([
     changeOrderStatus(order.id, "CANCELLED"),
     changeOrderStatus(order.id, "CANCELLED"),

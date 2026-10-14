@@ -7,7 +7,10 @@ import { contactFromEnv, missingForLaunch } from "./src/lib/contact";
  * ostry web bez Impressum, ktere je ve Svycarsku u e-shopu povinne.
  */
 if (process.env.SHOP_LIVE === "1") {
-  const missing = missingForLaunch(contactFromEnv(process.env));
+  const missing = [
+    ...missingForLaunch(contactFromEnv(process.env)),
+    ...["RESEND_API_KEY", "EMAIL_FROM", "SHOP_IBAN"].filter((key) => !process.env[key]?.trim()),
+  ];
   if (missing.length > 0) {
     throw new Error(
       `SHOP_LIVE=1, ale chybi povinne promenne prostredi: ${missing.join(", ")}. ` +
