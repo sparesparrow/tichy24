@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { isLive, site } from "@/lib/site";
 import { getDictionary } from "@/lib/i18n";
+import { VoiceAssistant } from "@/components/VoiceAssistant";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -30,7 +31,10 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de-CH">
-      <body>{children}</body>
+      <body>
+        {children}
+        <VoiceAssistant />
+      </body>
     </html>
   );
 }
