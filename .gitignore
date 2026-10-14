@@ -10,3 +10,6 @@ next-env.d.ts
 src/generated
 .vercel
 dist-pages
+cypress/screenshots
+cypress/videos
+cypress/downloads
