@@ -6,9 +6,9 @@ import { usePathname } from "next/navigation";
 /**
  * ElevenLabs Agents widget (https://elevenlabs.io/docs/eleven-agents/customization/widget).
  * Jedna instance v root layoutu, skript se nacte jednou (async z unpkg), v /admin se nezobrazuje.
- * Agent je verejny — pristup omezuje allowlist domen v dashboardu ElevenLabs.
+ * Agent „Tichy24 Einkaufsberater“ (de) je verejny — pristup omezuje allowlist domen v dashboardu ElevenLabs.
  */
-const AGENT_ID = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID || "agent_01jwpatrdff2dsns5d56n0ardm";
+const AGENT_ID = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID || "agent_1701m4y70ahnfaea6v19bzr6a6zb";
 const EMBED_SRC = "https://unpkg.com/@elevenlabs/convai-widget-embed";
 const SCRIPT_ID = "elevenlabs-convai-embed";
 
