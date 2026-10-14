@@ -72,3 +72,7 @@ jobs:
       - name: Stock race check
         # Dukaz nad skutecnou databazi: posledni kusy zbozi nejdou prodat dvakrat.
         run: npm run check:stock
+
+      - name: Checkout rate-limit concurrency check
+        # The limiter must be atomic across many simultaneous checkout submissions.
+        run: npm run check:rate-limit
