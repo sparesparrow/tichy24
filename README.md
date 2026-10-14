@@ -92,7 +92,8 @@ Dokud `SHOP_LIVE` není `1`, web posílá `noindex` a `robots.txt` zakazuje vše
       nahrání skutečných produktů a fotek. **Seed s `SEED_DEMO_PRODUCTS=1` na produkci nespouštět.**
 - [ ] Změně `ADMIN_PASSWORD` z výchozí hodnoty.
 - [ ] Nastavení proměnných v hostingu: `DATABASE_URL` (Neon, `?sslmode=require`),
-      `DATABASE_URL_UNPOOLED`, `AUTH_SECRET`, `SITE_URL`, `SHOP_LIVE`, `SHOP_IBAN`.
+      `DATABASE_URL_UNPOOLED`, `AUTH_SECRET`, `SITE_URL`, `SHOP_LIVE`, `SHOP_IBAN`,
+      `CRON_SECRET` (náhodná hodnota, např. `openssl rand -base64 32`, pro zabezpečení plánovaného úkolu).
 
 ## Dočasná stránka na GitHub Pages
 
@@ -114,9 +115,11 @@ Lokálně: `npm run build:pages` a otevřít `dist-pages/index.html`.
 - **Žádná online platba.** Jen Vorkasse (převod) a hotovost při osobním převzetí. Další krok je
   Stripe Checkout nebo Payrexx s **TWINT** — ve Švýcarsku je to pro e-shop téměř nutnost.
   Rozšíření: nová hodnota `PaymentMethod`, webhook, který přepne stav na `PAID`.
-- **Nezaplacené objednávky drží sklad.** Sklad se odečítá při objednání; AGB dává 10 dní na
-  platbu, ale nic objednávku automaticky nezruší. Chybí cron (zrušit `NEW` + `PREPAYMENT` starší
-  10 dní a vrátit sklad přes `changeOrderStatus`).
+- **Automatické storno nezaplacené Vorkasse:** Vercel Cron volá `/api/cron/expire-orders` jednou
+  denně v 03:00 UTC. Zruší pouze objednávky `NEW` + `PREPAYMENT` po 10denní lhůtě a vrací sklad
+  přes existující transakční `changeOrderStatus`. Endpoint vyžaduje `CRON_SECRET`; na Vercelu
+  nastavte stejnou náhodnou hodnotu v proměnných prostředí. Úloha běží jen na produkčním deployi
+  a čas spuštění se může podle plánu Vercelu lišit.
 - **Žádné omezení počtu objednávek.** Je tu jen honeypot. Rate limit v paměti instance by na
   serverless nefungoval (stejně jako u `/api/inquiries` v citadele) — vhodné je sdílené úložiště
   nebo ochrana na úrovni platformy (Vercel Firewall).

@@ -4,7 +4,8 @@ import { prisma } from "./prisma";
 import type { CartLine } from "./cart";
 import type { CheckoutData } from "./checkout";
 import { computeTotals } from "./pricing";
-import { canTransition, restocksOn, type OrderStatusKey } from "./order-status";
+import { canTransition, restocksOn, type OrderStatusKey, type PaymentKey } from "./order-status";
+import { isExpiredUnpaidPrepaymentOrder, prepaymentCutoff } from "./order-expiration";
 
 export class EmptyCartError extends Error {
   constructor() {
@@ -104,6 +105,59 @@ export async function placeOrder(data: CheckoutData, lines: readonly CartLine[])
 
 export type StatusChangeResult = "ok" | "not_found" | "invalid_transition";
 
+interface StatusChangeGuard {
+  /** Ocekavany stav chranici automatiku pred storno jiz zaplacene objednavky. */
+  expectedStatus?: OrderStatusKey;
+  expectedPaymentMethod?: PaymentKey;
+  createdAtOrBefore?: Date;
+}
+
+/**
+ * Zrusi jednu Vorkasse objednavku pouze tehdy, kdyz je stale nova a po lhute.
+ * Ocekavany stav i platebni metodu znovu overi v transakci — cron nesmi zrusit
+ * objednavku, kterou mezitim obsluha oznacila jako zaplacenou.
+ */
+export async function expirePrepaymentOrderIfOverdue(
+  orderId: string,
+  now: Date = new Date(),
+): Promise<StatusChangeResult> {
+  return changeOrderStatus(orderId, "CANCELLED", {
+    expectedStatus: "NEW",
+    expectedPaymentMethod: "PREPAYMENT",
+    createdAtOrBefore: prepaymentCutoff(now),
+  });
+}
+
+/**
+ * Uvolni sklad u vsech dosud nezaplacenych Vorkasse objednavek starsich 10 dni.
+ * Opira se o stejnou tranzici jako rucni storno, ktera vraci sklad prave jednou.
+ */
+export async function expireUnpaidPrepaymentOrders(now: Date = new Date()) {
+  const cutoff = prepaymentCutoff(now);
+  const candidates = await prisma.order.findMany({
+    where: {
+      status: "NEW",
+      paymentMethod: "PREPAYMENT",
+      createdAt: { lte: cutoff },
+    },
+    orderBy: { createdAt: "asc" },
+    select: { id: true, status: true, paymentMethod: true, createdAt: true },
+  });
+  const expired = candidates.filter((order) => isExpiredUnpaidPrepaymentOrder(order, now));
+
+  let cancelled = 0;
+  for (const order of expired) {
+    if ((await expirePrepaymentOrderIfOverdue(order.id, now)) === "ok") cancelled++;
+  }
+
+  return {
+    cutoff: cutoff.toISOString(),
+    scanned: expired.length,
+    cancelled,
+    skipped: expired.length - cancelled,
+  };
+}
+
 /**
  * Zmena stavu z administrace. Pravidla prechodu jsou v order-status.ts;
  * `updateMany` s podminkou na puvodni stav chrani pred dvema soubeznymi
@@ -112,6 +166,7 @@ export type StatusChangeResult = "ok" | "not_found" | "invalid_transition";
 export async function changeOrderStatus(
   orderId: string,
   to: OrderStatusKey,
+  guard: StatusChangeGuard = {},
 ): Promise<StatusChangeResult> {
   return prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({
@@ -119,11 +174,23 @@ export async function changeOrderStatus(
       include: { items: true },
     });
     if (!order) return "not_found";
+    if (
+      (guard.expectedStatus && order.status !== guard.expectedStatus) ||
+      (guard.expectedPaymentMethod && order.paymentMethod !== guard.expectedPaymentMethod) ||
+      (guard.createdAtOrBefore && order.createdAt > guard.createdAtOrBefore)
+    ) {
+      return "invalid_transition";
+    }
     if (!canTransition(order.status, to, order.paymentMethod)) return "invalid_transition";
 
     const now = new Date();
     const res = await tx.order.updateMany({
-      where: { id: orderId, status: order.status },
+      where: {
+        id: orderId,
+        status: order.status,
+        ...(guard.expectedPaymentMethod ? { paymentMethod: guard.expectedPaymentMethod } : {}),
+        ...(guard.createdAtOrBefore ? { createdAt: { lte: guard.createdAtOrBefore } } : {}),
+      },
       data: {
         status: to,
         ...(to === "PAID" ? { paidAt: now } : {}),

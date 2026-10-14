@@ -57,6 +57,9 @@ Jeden test: `npx vitest run src/lib/pricing.test.ts`. Prisma CLI čte `DATABASE_
   tlačítka, **pravidla vynucuje server** (`changeOrderStatus`).
 - **Potvrzení objednávky** je pod náhodným `publicToken`, ne pod číslem objednávky (to je uhodnutelné
   a stránka ukazuje adresu).
+- **Nezaplacená Vorkasse** se po 10 dnech automaticky ruší denním Vercel Cronem
+  (`/api/cron/expire-orders`). Endpoint vyžaduje `CRON_SECRET` a storno používá stejnou
+  transakční logiku jako administrace, včetně jednorázového vrácení skladu.
 - **Auth** je rozdělená: `src/auth.config.ts` je edge-safe (bez Prisma a bcrypt) pro middleware,
   `src/auth.ts` přidává Prisma a bcrypt. Middleware chrání jen `/admin/*`; **každá server action
   administrace navíc volá `requireAdmin()`** (akce jsou veřejné POST endpointy). Přihlášení porovnává
@@ -77,8 +80,9 @@ označuje i `user:heslo@` v connection stringu.
   — odstranění rozbije každou routu s Prismou. `assertProductionUrl()` v `src/lib/prisma.ts` na produkci
   vyžaduje `sslmode`.
 - Prisma 7 vyžaduje **Node ≥ 20.19** (CI i Vercel: 22).
-- **Bez e-mailů, bez online platby, bez automatického rušení nezaplacených objednávek, bez rate limitu**
-  — viz README. Nepřidávat rate limit jako in-memory `Map` na serverless (per instance = nefunguje).
+- **Bez e-mailů, bez online platby, bez rate limitu** — viz README. Automatické storno nezaplacené
+  Vorkasse je zajištěné denním cronem, který vyžaduje `CRON_SECRET`. Nepřidávat rate limit jako
+  in-memory `Map` na serverless (per instance = nefunguje).
 - Dokud `SHOP_LIVE≠1`, web posílá `noindex` a `robots.txt` zakazuje vše.
 - **Kontaktní údaje (adresa, telefon, UID) jsou v env `SHOP_*`, ne v kódu** (repo je veřejné) —
   čistý modul `src/lib/contact.ts`, `site.contact` je čte. Texty se skládají jen z vyplněných hodnot

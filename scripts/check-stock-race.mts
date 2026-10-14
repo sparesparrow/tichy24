@@ -18,7 +18,7 @@ try {
 
 // Dynamicke importy: `src/lib/prisma` cte DATABASE_URL hned pri nacteni.
 const { prisma } = await import("../src/lib/prisma");
-const { placeOrder, changeOrderStatus, OutOfStockError } = await import("../src/lib/orders");
+const { placeOrder, changeOrderStatus, expirePrepaymentOrderIfOverdue, OutOfStockError } = await import("../src/lib/orders");
 
 const MARKER = "stock-race-check";
 let failures = 0;
@@ -99,6 +99,47 @@ try {
   const afterCancel = await prisma.product.findUniqueOrThrow({ where: { id: product.id } });
   check("jedno storno projde, druhé je odmítnuto", [c1, c2].sort().join() === "invalid_transition,ok", { c1, c2 });
   check("sklad je zpět na 2, ne na 4", afterCancel.stock === 2, { stock: afterCancel.stock });
+
+  console.log("Automaticke vyprseni nezaplacene Vorkasse:");
+  const prepaidCustomer = { ...customer, paymentMethod: "PREPAYMENT" as const };
+  const expiredOrder = await placeOrder(prepaidCustomer, [{ productId: product.id, quantity: 1 }]);
+  await prisma.order.update({
+    where: { id: expiredOrder.id },
+    data: { createdAt: new Date(Date.now() - 11 * 24 * 60 * 60 * 1000) },
+  });
+  const [expire1, expire2] = await Promise.all([
+    expirePrepaymentOrderIfOverdue(expiredOrder.id),
+    expirePrepaymentOrderIfOverdue(expiredOrder.id),
+  ]);
+  check("souběžné vypršení zruší objednávku právě jednou",
+    [expire1, expire2].sort().join() === "invalid_transition,ok", { expire1, expire2 });
+  const expiredAfter = await prisma.order.findUniqueOrThrow({ where: { id: expiredOrder.id } });
+  const stockAfterExpiry = await prisma.product.findUniqueOrThrow({ where: { id: product.id } });
+  check("po vypršení je objednávka zrušena", expiredAfter.status === "CANCELLED", { status: expiredAfter.status });
+  check("sklad se po vypršení vrátí přesně jednou", stockAfterExpiry.stock === 2, { stock: stockAfterExpiry.stock });
+
+  const recentOrder = await placeOrder(prepaidCustomer, [{ productId: product.id, quantity: 1 }]);
+  const recentResult = await expirePrepaymentOrderIfOverdue(recentOrder.id);
+  const recentAfter = await prisma.order.findUniqueOrThrow({ where: { id: recentOrder.id } });
+  check("cerstva Vorkasse objednavka se nezrusi", recentResult === "invalid_transition" && recentAfter.status === "NEW", {
+    recentResult, status: recentAfter.status,
+  });
+
+  const paidOrder = await placeOrder(prepaidCustomer, [{ productId: product.id, quantity: 1 }]);
+  const markPaid = await changeOrderStatus(paidOrder.id, "PAID");
+  await prisma.order.update({
+    where: { id: paidOrder.id },
+    data: { createdAt: new Date(Date.now() - 11 * 24 * 60 * 60 * 1000) },
+  });
+  const paidExpiry = await expirePrepaymentOrderIfOverdue(paidOrder.id);
+  const paidAfter = await prisma.order.findUniqueOrThrow({ where: { id: paidOrder.id } });
+  const stockAfterPaidExpiry = await prisma.product.findUniqueOrThrow({ where: { id: product.id } });
+  check("starsi zaplaceny prikaz zustane zaplaceny",
+    markPaid === "ok" && paidExpiry === "invalid_transition" && paidAfter.status === "PAID",
+    { markPaid, paidExpiry, status: paidAfter.status });
+  check("storno cronem nezmeni sklad zaplacene objednavky", stockAfterPaidExpiry.stock === 0, {
+    stock: stockAfterPaidExpiry.stock,
+  });
 
   await prisma.product.delete({ where: { id: second.id } }).catch(() => {});
 } finally {
