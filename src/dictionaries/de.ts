@@ -431,6 +431,12 @@ export const de = {
           ],
         },
         {
+          heading: "Schutz vor Missbrauch",
+          paragraphs: [
+            "Zum Schutz vor automatisierten oder missbräuchlichen Bestellungen zählen wir Bestellversuche in kurzen Zeitfenstern. Dafür wird die Client-IP mit einem geheimen Schlüssel in eine zeitfensterbezogene Kennung umgewandelt. In der Shop-Datenbank speichern wir nur diese HMAC-Kennung, nicht die rohe IP-Adresse. Abgelaufene Zähler werden bei der täglichen Wartung gelöscht; die Kennungen bleiben damit in der Regel höchstens etwa zwei Tage gespeichert.",
+          ],
+        },
+        {
           heading: "Weitergabe an Dritte",
           paragraphs: [
             "Wir geben Daten nur weiter, soweit dies zur Abwicklung nötig ist, etwa an die Post für den Versand. Für Hosting und Datenbank setzen wir Dienstleister ein, die in unserem Auftrag Daten bearbeiten. Dabei können Daten auch ins Ausland, insbesondere in die EU und in die USA, übermittelt werden. Wir stellen durch vertragliche Garantien (z. B. Standardvertragsklauseln) ein angemessenes Datenschutzniveau sicher.",
