@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { addLine, removeLine, setLine } from "@/lib/cart";
 import { readCart, writeCart } from "@/lib/cart-store";
@@ -13,6 +14,8 @@ import {
   placeOrder,
 } from "@/lib/orders";
 import { prisma } from "@/lib/prisma";
+import { checkCheckoutRateLimit } from "@/lib/checkout-rate-limit";
+import { clientIdentifierFromHeaders } from "@/lib/rate-limit-policy";
 
 /**
  * Server actions verejneho obchodu. Kazda z nich je verejne dosazitelny
@@ -76,6 +79,24 @@ export async function placeOrderAction(
   // Honeypot: vyplnene pole znamena bota. Tvarime se, ze vse prislo v poradku —
   // chybova hlaska by botovi jen napovedela, co ho prozradilo.
   if (String(formData.get("website") ?? "") !== "") redirect("/");
+
+  // Shared DB counters work across concurrent Vercel/serverless instances.
+  // Fail closed if the limiter cannot reach Postgres rather than silently disable protection.
+  try {
+    const requestHeaders = await headers();
+    const clientIdentifier = clientIdentifierFromHeaders(requestHeaders);
+    const limit = await checkCheckoutRateLimit(clientIdentifier);
+    if (!limit.allowed) {
+      return {
+        errors: {},
+        values,
+        formError: dict.checkout.rateLimited(Math.max(1, Math.ceil(limit.retryAfterSeconds / 60))),
+      };
+    }
+  } catch (error) {
+    console.error("checkout rate limiter unavailable", error);
+    return { errors: {}, values, formError: dict.checkout.genericError };
+  }
 
   const checked = validateCheckout(formData);
   if (!checked.ok) {
