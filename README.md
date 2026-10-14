@@ -120,9 +120,10 @@ Lokálně: `npm run build:pages` a otevřít `dist-pages/index.html`.
   přes existující transakční `changeOrderStatus`. Endpoint vyžaduje `CRON_SECRET`; na Vercelu
   nastavte stejnou náhodnou hodnotu v proměnných prostředí. Úloha běží jen na produkčním deployi
   a čas spuštění se může podle plánu Vercelu lišit.
-- **Žádné omezení počtu objednávek.** Je tu jen honeypot. Rate limit v paměti instance by na
-  serverless nefungoval (stejně jako u `/api/inquiries` v citadele) — vhodné je sdílené úložiště
-  nebo ochrana na úrovni platformy (Vercel Firewall).
+- **Omezení pokladny:** nejvýše 5 pokusů za 10 minut a 20 za hodinu z jedné klientské IP.
+  Počítadla jsou atomická v PostgreSQL, takže platí napříč instancemi serverless funkcí. Do DB se
+  ukládá pouze HMAC hash kombinující IP, rozsah a časové okno, nikoli surová IP; denní cron je čistí
+  po expiraci. Pro odolnost proti sofistikovaným botům lze doplnit i pravidla Vercel Firewall.
 - **Bez QR-faktury.** Švýcarský QR-bill by na potvrzení zlepšil Vorkasse; zatím jen IBAN + číslo
   objednávky jako účel platby.
 - **Bez fotek produktů.** Do doby, než se nahraje `imageUrl`, se ukazuje piktogram kategorie.
